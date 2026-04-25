@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SECURE_SHELL | PSNACET</title>
+    <style>
+        body { background: #020202; color: #00ffff; font-family: 'Courier New', monospace; margin: 0; padding: 20px; }
+        #terminal {
+            border: 2px solid #ff0033; /* Neon Red */
+            background: #000;
+            height: 500px;
+            padding: 15px;
+            overflow-y: auto;
+            box-shadow: 0 0 15px #ff0033;
+        }
+        .bot-text { color: #ff0033; margin: 5px 0; }
+        .user-text { color: #00ffff; margin: 5px 0; }
+        #input-container { display: flex; margin-top: 15px; }
+        #prompt { color: #ff0033; margin-right: 10px; font-weight: bold; }
+        input { 
+            background: transparent; border: none; color: #00ffff; 
+            font-family: inherit; font-size: 16px; outline: none; width: 100%;
+        }
+        .system-header { text-align: center; color: #ff0033; text-shadow: 0 0 10px #ff0033; }
+    </style>
+</head>
+<body>
+    <h1 class="system-header">PSNACET ARCHANGEL v4.0 - RESTRICTED</h1>
+    <div id="terminal">
+        <div class="bot-text">[SYSTEM] Kernel Initialized...</div>
+        <div class="bot-text">[SYSTEM] Firewall active. Flag-Protocol: ENCRYPTED.</div>
+        <div id="log"></div>
+    </div>
+    <div id="input-container">
+        <span id="prompt">admin@knull_server:~$</span>
+        <input type="text" id="cmd" autofocus autocomplete="off">
+    </div>
+
+    <script>
+        const input = document.getElementById('cmd');
+        const log = document.getElementById('log');
+
+        input.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const msg = input.value;
+                log.innerHTML += `<div class="user-text">> ${msg}</div>`;
+                input.value = '';
+
+                // API request to your Flask backend
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: msg})
+                });
+                const data = await response.json();
+                
+                log.innerHTML += `<div class="bot-text">[BOT]: ${data.response}</div>`;
+                document.getElementById('terminal').scrollTop = 99999;
+            }
+        });
+    </script>
+</body>
+</html>
