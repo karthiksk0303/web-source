@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SECURE_SHELL | PSNACET</title>
     <style>
-        body { background: #020202; color: #00ffff; font-family: 'Courier New', monospace; margin: 0; padding: 20px; }
+        body { 
+            background: #020202; 
+            color: #00ffff; 
+            font-family: 'Courier New', monospace; 
+            margin: 0; 
+            padding: 20px; 
+            overflow: hidden;
+        }
         #terminal {
             border: 2px solid #ff0033; /* Neon Red */
             background: #000;
@@ -12,25 +20,43 @@
             padding: 15px;
             overflow-y: auto;
             box-shadow: 0 0 15px #ff0033;
+            position: relative;
         }
-        .bot-text { color: #ff0033; margin: 5px 0; }
+        /* CRT Scanline effect */
+        #terminal::after {
+            content: " ";
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+        .bot-text { color: #ff0033; margin: 5px 0; line-height: 1.4; }
         .user-text { color: #00ffff; margin: 5px 0; }
-        #input-container { display: flex; margin-top: 15px; }
-        #prompt { color: #ff0033; margin-right: 10px; font-weight: bold; }
+        #input-container { display: flex; margin-top: 15px; align-items: center; }
+        #prompt { color: #ff0033; margin-right: 10px; font-weight: bold; white-space: nowrap; }
         input { 
-            background: transparent; border: none; color: #00ffff; 
-            font-family: inherit; font-size: 16px; outline: none; width: 100%;
+            background: transparent; 
+            border: none; 
+            color: #00ffff; 
+            font-family: inherit; 
+            font-size: 16px; 
+            outline: none; 
+            width: 100%;
         }
-        .system-header { text-align: center; color: #ff0033; text-shadow: 0 0 10px #ff0033; }
+        .system-header { text-align: center; color: #ff0033; text-shadow: 0 0 10px #ff0033; margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <h1 class="system-header">PSNACET ARCHANGEL v4.0 - RESTRICTED</h1>
+    
     <div id="terminal">
-        <div class="bot-text">[SYSTEM] Kernel Initialized...</div>
+        <div class="bot-text">[SYSTEM] Kernel 6.1.0-kali-amd64 Initialized...</div>
         <div class="bot-text">[SYSTEM] Firewall active. Flag-Protocol: ENCRYPTED.</div>
+        <div class="bot-text">[SYSTEM] Unauthorized access will be logged to KNULL_TEAM database.</div>
         <div id="log"></div>
     </div>
+
     <div id="input-container">
         <span id="prompt">admin@knull_server:~$</span>
         <input type="text" id="cmd" autofocus autocomplete="off">
@@ -39,25 +65,45 @@
     <script>
         const input = document.getElementById('cmd');
         const log = document.getElementById('log');
+        const terminal = document.getElementById('terminal');
 
         input.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
-                const msg = input.value;
+                const msg = input.value.trim();
+                if (!msg) return;
+
+                // 1. Display User Command
                 log.innerHTML += `<div class="user-text">> ${msg}</div>`;
                 input.value = '';
 
-                // API request to your Flask backend
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({message: msg})
-                });
-                const response = await fetch('https://web-source-mb9s.onrender.com/chat', {
+                // 2. Send to Render Backend
+                try {
+                    const response = await fetch('https://web-source-mb9s.onrender.com/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message: msg })
+                    });
+
+                    if (!response.ok) throw new Error('Server responded with error');
+
+                    const data = await response.json();
+                    
+                    // 3. Display Bot Response
+                    log.innerHTML += `<div class="bot-text">[BOT]: ${data.response}</div>`;
+                } catch (err) {
+                    log.innerHTML += `<div class="bot-text" style="color:#ffff00;">[SYSTEM ERROR]: UPLINK_TIMEOUT. Ensure backend is active at Render.</div>`;
+                    console.error('Connection Error:', err);
+                }
                 
-                log.innerHTML += `<div class="bot-text">[BOT]: ${data.response}</div>`;
-                document.getElementById('terminal').scrollTop = 99999;
+                // Auto-scroll to bottom
+                terminal.scrollTop = terminal.scrollHeight;
             }
         });
+
+        // Keep input focused
+        document.addEventListener('click', () => input.focus());
     </script>
 </body>
 </html>
